@@ -1,10 +1,16 @@
 import { GoogleGenAI } from "@google/genai";
 
-// Configured with provided API Key
-const API_KEY = "AIzaSyClKu7ZggFCevzXDaKdCqT6cTGeJgwuGbI";
+// Declare process for TypeScript support without @types/node
+declare var process: {
+  env: {
+    API_KEY: string;
+  }
+};
 
 const getAiClient = () => {
-  return new GoogleGenAI({ apiKey: API_KEY });
+  // API Key is now managed via environment variables
+  // Ensure you add API_KEY to your Vercel Project Settings
+  return new GoogleGenAI({ apiKey: process.env.API_KEY });
 };
 
 export const generateCaption = async (topic: string, tone: string, language: string = 'English'): Promise<string> => {
