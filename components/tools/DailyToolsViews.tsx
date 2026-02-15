@@ -31,16 +31,21 @@ export const DailyToolView: React.FC<ToolViewProps> = ({ type }) => {
   const [qrLogo, setQrLogo] = useState<string | null>(null);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
 
-  const processAction = async (action: () => Promise<string | void> | string | void) => {
+  // Updated processAction with relaxed typing to avoid strict union mismatches
+  const processAction = async (action: () => Promise<any> | any) => {
     setLoading(true);
     setResult('');
-    setStylishResults([]); // Clear previous results
+    setStylishResults([]); 
     
     await simulateDirectLinkAd();
     
-    const res = await action();
-    if (typeof res === 'string') {
-        setResult(res);
+    try {
+        const res = await action();
+        if (typeof res === 'string') {
+            setResult(res);
+        }
+    } catch (error) {
+        console.error("Action failed", error);
     }
     
     setLoading(false);
@@ -51,7 +56,7 @@ export const DailyToolView: React.FC<ToolViewProps> = ({ type }) => {
   };
 
   // Logic
-  const generateStylishText = () => {
+  const generateStylishText = (): void => {
     if (!textInput) return;
 
     const transform = (str: string, map: Record<string, string> | ((c: string) => string)) => {
@@ -61,7 +66,6 @@ export const DailyToolView: React.FC<ToolViewProps> = ({ type }) => {
         }).join('');
     };
 
-    // Let's use specific maps for best compatibility
     const fonts: FontDef[] = [
         {
             name: "Bubbles",
@@ -158,7 +162,7 @@ export const DailyToolView: React.FC<ToolViewProps> = ({ type }) => {
     const results = fonts.map(style => {
         let content = "";
         if (style.reverse && style.map) {
-             const m = style.map; // Assign to variable for TS strict checking in closure
+             const m = style.map;
              content = textInput.split('').reverse().map(c => {
                 return m[c] || m[c.toLowerCase()] || c;
              }).join('');
@@ -173,7 +177,7 @@ export const DailyToolView: React.FC<ToolViewProps> = ({ type }) => {
     setStylishResults(results);
   };
 
-  const generatePassword = () => {
+  const generatePassword = (): string => {
     const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+";
     let retVal = "";
     for (let i = 0, n = charset.length; i < pwdLength; ++i) {
@@ -182,7 +186,7 @@ export const DailyToolView: React.FC<ToolViewProps> = ({ type }) => {
     return retVal;
   };
 
-  const generateRandomName = () => {
+  const generateRandomName = (): string => {
     const names = ["Alex", "Jordan", "Taylor", "Morgan", "Casey", "River", "Sam", "Jamie", "Dakota", "Reese"];
     return names[Math.floor(Math.random() * names.length)];
   };
@@ -198,7 +202,7 @@ export const DailyToolView: React.FC<ToolViewProps> = ({ type }) => {
       }
   };
 
-  const generateQR = async () => {
+  const generateQR = async (): Promise<string> => {
     setQrDataUrl(null);
     if(!textInput) return "Enter text first";
     try {
@@ -242,7 +246,6 @@ export const DailyToolView: React.FC<ToolViewProps> = ({ type }) => {
                         resolve(canvas.toDataURL());
                     };
                     logoImg.onerror = () => {
-                         // Fallback if logo fails
                          resolve(qrUrl);
                     }
                     logoImg.src = qrLogo;
@@ -254,6 +257,7 @@ export const DailyToolView: React.FC<ToolViewProps> = ({ type }) => {
         setQrDataUrl(finalUrl);
         return `<img src="${finalUrl}" alt="QR Code" class="mx-auto rounded-lg border-4 border-white shadow-md" />`;
     } catch (err) {
+        console.error(err);
         return "Error generating QR";
     }
   };
