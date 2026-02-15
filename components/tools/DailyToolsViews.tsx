@@ -3,6 +3,7 @@ import { ResultBox } from '../ResultBox';
 import { ToolType } from '../../types';
 import { incrementToolUsage, simulateDirectLinkAd, triggerRedirectAd } from '../../services/adService';
 import QRCode from 'qrcode';
+import { Download } from 'lucide-react';
 
 interface ToolViewProps {
   type: ToolType;
@@ -16,6 +17,12 @@ export const DailyToolView: React.FC<ToolViewProps> = ({ type }) => {
   // Inputs
   const [textInput, setTextInput] = useState('');
   const [pwdLength, setPwdLength] = useState(12);
+
+  // QR Code Specific State
+  const [qrColor, setQrColor] = useState('#000000');
+  const [qrBgColor, setQrBgColor] = useState('#ffffff');
+  const [qrLogo, setQrLogo] = useState<string | null>(null);
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
 
   const processAction = async (action: () => Promise<string | void> | string | void) => {
     setLoading(true);
@@ -56,9 +63,6 @@ export const DailyToolView: React.FC<ToolViewProps> = ({ type }) => {
     // 2. Square
     const squareMap: Record<string, string> = {};
     "abcdefghijklmnopqrstuvwxyz".split('').forEach((c, i) => squareMap[c] = String.fromCodePoint(0x1F130 + i)); // Bold Script actually, let's use fixed squares
-    // Fixing Square Map manually for safety or using correct ranges
-    // A-Z: 1F130..1F149
-    // a-z: not in same block directly as filled squares usually, using generic mapping logic
     
     // Let's use specific maps for best compatibility
     const fonts = [
@@ -77,8 +81,7 @@ export const DailyToolView: React.FC<ToolViewProps> = ({ type }) => {
             name: "Square",
             fn: (c: string) => {
                 const code = c.charCodeAt(0);
-                if (code >= 97 && code <= 122) return String.fromCodePoint(0x1F130 + code - 97); // actually these are bold script logic in some fonts, but let's use the Square A enclosed
-                // Enclosed Alphanumeric Supplement: 1F130 is 🄰 (Square A)
+                if (code >= 97 && code <= 122) return String.fromCodePoint(0x1F130 + code - 97);
                 if (code >= 65 && code <= 90) return String.fromCodePoint(0x1F130 + code - 65);
                 return c;
             }
@@ -187,14 +190,85 @@ export const DailyToolView: React.FC<ToolViewProps> = ({ type }) => {
     return names[Math.floor(Math.random() * names.length)];
   };
 
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (file) {
+          const reader = new FileReader();
+          reader.onload = (evt) => {
+              setQrLogo(evt.target?.result as string);
+          };
+          reader.readAsDataURL(file);
+      }
+  };
+
   const generateQR = async () => {
+    setQrDataUrl(null);
     if(!textInput) return "Enter text first";
     try {
-        const url = await QRCode.toDataURL(textInput);
-        return `<img src="${url}" alt="QR Code" class="mx-auto rounded-lg border-4 border-white shadow-md" />`;
+        const options: any = {
+            errorCorrectionLevel: 'H',
+            margin: 2,
+            width: 400,
+            color: {
+                dark: qrColor,
+                light: qrBgColor
+            }
+        };
+
+        const qrUrl = await QRCode.toDataURL(textInput, options);
+        let finalUrl = qrUrl;
+
+        if (qrLogo) {
+            finalUrl = await new Promise<string>((resolve) => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                if (!ctx) return resolve(qrUrl);
+
+                const qrImg = new Image();
+                qrImg.crossOrigin = "Anonymous";
+                qrImg.onload = () => {
+                    canvas.width = qrImg.width;
+                    canvas.height = qrImg.height;
+                    
+                    // Draw QR
+                    ctx.drawImage(qrImg, 0, 0);
+
+                    const logoImg = new Image();
+                    logoImg.crossOrigin = "Anonymous";
+                    logoImg.onload = () => {
+                        const logoSize = canvas.width * 0.2; // 20% size
+                        const x = (canvas.width - logoSize) / 2;
+                        const y = (canvas.height - logoSize) / 2;
+
+                        ctx.drawImage(logoImg, x, y, logoSize, logoSize);
+                        
+                        resolve(canvas.toDataURL());
+                    };
+                    logoImg.onerror = () => {
+                         // Fallback if logo fails
+                         resolve(qrUrl);
+                    }
+                    logoImg.src = qrLogo;
+                };
+                qrImg.src = qrUrl;
+            });
+        }
+        
+        setQrDataUrl(finalUrl);
+        return `<img src="${finalUrl}" alt="QR Code" class="mx-auto rounded-lg border-4 border-white shadow-md" />`;
     } catch (err) {
         return "Error generating QR";
     }
+  };
+
+  const downloadQR = () => {
+      if (!qrDataUrl) return;
+      const link = document.createElement('a');
+      link.href = qrDataUrl;
+      link.download = `qrcode-${Date.now()}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
   };
 
   return (
@@ -240,10 +314,47 @@ export const DailyToolView: React.FC<ToolViewProps> = ({ type }) => {
                     value={textInput}
                     onChange={e => setTextInput(e.target.value)}
                 />
+                
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <label className="text-sm text-gray-600 dark:text-gray-400 block mb-1">QR Color</label>
+                        <input type="color" value={qrColor} onChange={e => setQrColor(e.target.value)} className="h-10 w-full rounded cursor-pointer border border-gray-300 dark:border-gray-600 bg-white dark:bg-slate-800 p-1" />
+                    </div>
+                    <div>
+                        <label className="text-sm text-gray-600 dark:text-gray-400 block mb-1">Background</label>
+                        <input type="color" value={qrBgColor} onChange={e => setQrBgColor(e.target.value)} className="h-10 w-full rounded cursor-pointer border border-gray-300 dark:border-gray-600 bg-white dark:bg-slate-800 p-1" />
+                    </div>
+                </div>
+
+                <div>
+                    <label className="text-sm text-gray-600 dark:text-gray-400 block mb-1">Add Logo (Optional)</label>
+                    <div className="flex items-center gap-4">
+                        <label className="flex-1 cursor-pointer">
+                            <span className="flex items-center justify-center w-full px-4 py-2 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
+                                <span className="text-sm text-gray-500 dark:text-gray-400">Choose Image...</span>
+                            </span>
+                            <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                        </label>
+                        {qrLogo && (
+                            <div className="flex items-center gap-2 bg-gray-100 dark:bg-slate-800 p-2 rounded-lg">
+                                <img src={qrLogo} className="w-8 h-8 object-cover rounded" alt="Preview" />
+                                <button onClick={() => setQrLogo(null)} className="text-xs text-red-500 hover:text-red-700 font-medium">Remove</button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
                 <button onClick={() => processAction(generateQR)} disabled={loading} className="primary-btn">
-                    {loading ? 'Generating...' : 'Generate QR Code'}
+                    {loading ? 'Generating...' : 'Generate Custom QR Code'}
                 </button>
                 <ResultBox content={result} isHTML={true} />
+                
+                {qrDataUrl && !loading && (
+                    <button onClick={downloadQR} className="w-full py-3 px-6 mt-2 rounded-xl bg-green-500 hover:bg-green-600 text-white font-bold shadow-lg transition-all flex items-center justify-center gap-2">
+                        <Download className="w-5 h-5" />
+                        Download QR Code
+                    </button>
+                )}
              </div>
         )}
 
