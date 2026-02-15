@@ -7,12 +7,12 @@ const getAiClient = () => {
   return new GoogleGenAI({ apiKey: API_KEY });
 };
 
-export const generateCaption = async (topic: string, tone: string): Promise<string> => {
+export const generateCaption = async (topic: string, tone: string, language: string = 'English'): Promise<string> => {
   const ai = getAiClient();
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
-      contents: `Generate 5 catchy, engaging social media captions for a post about: "${topic}". Tone: ${tone}. Include emojis.`,
+      contents: `Generate 5 catchy, engaging social media captions in ${language} for a post about: "${topic}". Tone: ${tone}. Include emojis.`,
     });
     return response.text || "No caption generated.";
   } catch (error) {
@@ -21,12 +21,12 @@ export const generateCaption = async (topic: string, tone: string): Promise<stri
   }
 };
 
-export const generateShortStory = async (prompt: string, genre: string): Promise<string> => {
+export const generateShortStory = async (prompt: string, genre: string, language: string = 'English'): Promise<string> => {
   const ai = getAiClient();
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
-      contents: `Write a very short story (max 200 words) with the following premise: "${prompt}". Genre: ${genre}.`,
+      contents: `Write a very short story (max 200 words) in ${language} with the following premise: "${prompt}". Genre: ${genre}.`,
     });
     return response.text || "No story generated.";
   } catch (error) {
@@ -35,12 +35,12 @@ export const generateShortStory = async (prompt: string, genre: string): Promise
   }
 };
 
-export const generateStudyQuestions = async (topic: string, level: string): Promise<string> => {
+export const generateStudyQuestions = async (topic: string, level: string, language: string = 'English'): Promise<string> => {
   const ai = getAiClient();
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
-      contents: `Create 5 study questions (multiple choice or open ended) about "${topic}" for a ${level} level student. Provide answers at the end.`,
+      contents: `Create 5 study questions (multiple choice or open ended) in ${language} about "${topic}" for a ${level} level student. Provide answers at the end.`,
     });
     return response.text || "No questions generated.";
   } catch (error) {

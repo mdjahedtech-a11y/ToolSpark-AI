@@ -14,7 +14,8 @@ export const AIToolView: React.FC<ToolViewProps> = ({ type }) => {
 
   // AI Inputs
   const [topic, setTopic] = useState('');
-  const [tone, setTone] = useState('Fun');
+  const [tone, setTone] = useState('Fun'); // Also functions as Genre or Level based on tool context
+  const [language, setLanguage] = useState('English');
   
   const processAI = async (callFn: () => Promise<string>) => {
     setLoading(true);
@@ -32,23 +33,37 @@ export const AIToolView: React.FC<ToolViewProps> = ({ type }) => {
     }
   };
 
+  const LanguageSelector = () => (
+    <select 
+        className="input-field" 
+        value={language} 
+        onChange={e => setLanguage(e.target.value)}
+    >
+        <option value="English">English</option>
+        <option value="Bangla">Bangla</option>
+    </select>
+  );
+
   return (
     <div className="space-y-6">
         {type === ToolType.AI_CAPTION && (
             <div className="space-y-4">
                 <input placeholder="Post Topic (e.g., Sunset at beach)" className="input-field" value={topic} onChange={e => setTopic(e.target.value)} />
-                <select className="input-field" value={tone} onChange={e => setTone(e.target.value)}>
-                    <option>Fun</option>
-                    <option>Professional</option>
-                    <option>Sarcastic</option>
-                    <option>Inspirational</option>
-                </select>
+                <div className="grid grid-cols-2 gap-4">
+                    <select className="input-field" value={tone} onChange={e => setTone(e.target.value)}>
+                        <option>Fun</option>
+                        <option>Professional</option>
+                        <option>Sarcastic</option>
+                        <option>Inspirational</option>
+                    </select>
+                    <LanguageSelector />
+                </div>
                 <button 
-                    onClick={() => processAI(() => generateCaption(topic, tone))} 
+                    onClick={() => processAI(() => generateCaption(topic, tone, language))} 
                     disabled={loading || !topic} 
                     className="primary-btn"
                 >
-                    {loading ? 'AI is thinking...' : 'Generate Captions'}
+                    {loading ? 'AI is thinking...' : 'Launch!'}
                 </button>
             </div>
         )}
@@ -56,14 +71,17 @@ export const AIToolView: React.FC<ToolViewProps> = ({ type }) => {
         {type === ToolType.AI_STORY && (
             <div className="space-y-4">
                 <input placeholder="Story Premise (e.g., A robot who loves to cook)" className="input-field" value={topic} onChange={e => setTopic(e.target.value)} />
-                <select className="input-field" value={tone} onChange={e => setTone(e.target.value)}>
-                    <option value="Sci-Fi">Sci-Fi</option>
-                    <option value="Fantasy">Fantasy</option>
-                    <option value="Horror">Horror</option>
-                    <option value="Comedy">Comedy</option>
-                </select>
+                <div className="grid grid-cols-2 gap-4">
+                    <select className="input-field" value={tone} onChange={e => setTone(e.target.value)}>
+                        <option value="Sci-Fi">Sci-Fi</option>
+                        <option value="Fantasy">Fantasy</option>
+                        <option value="Horror">Horror</option>
+                        <option value="Comedy">Comedy</option>
+                    </select>
+                    <LanguageSelector />
+                </div>
                 <button 
-                    onClick={() => processAI(() => generateShortStory(topic, tone))} 
+                    onClick={() => processAI(() => generateShortStory(topic, tone, language))} 
                     disabled={loading || !topic} 
                     className="primary-btn"
                 >
@@ -75,13 +93,16 @@ export const AIToolView: React.FC<ToolViewProps> = ({ type }) => {
         {type === ToolType.AI_STUDY && (
             <div className="space-y-4">
                 <input placeholder="Subject/Topic (e.g., Photosynthesis)" className="input-field" value={topic} onChange={e => setTopic(e.target.value)} />
-                <select className="input-field" value={tone} onChange={e => setTone(e.target.value)}>
-                    <option value="Beginner">Beginner</option>
-                    <option value="Intermediate">Intermediate</option>
-                    <option value="Advanced">Advanced</option>
-                </select>
+                <div className="grid grid-cols-2 gap-4">
+                    <select className="input-field" value={tone} onChange={e => setTone(e.target.value)}>
+                        <option value="Beginner">Beginner</option>
+                        <option value="Intermediate">Intermediate</option>
+                        <option value="Advanced">Advanced</option>
+                    </select>
+                    <LanguageSelector />
+                </div>
                 <button 
-                    onClick={() => processAI(() => generateStudyQuestions(topic, tone))} 
+                    onClick={() => processAI(() => generateStudyQuestions(topic, tone, language))} 
                     disabled={loading || !topic} 
                     className="primary-btn"
                 >
