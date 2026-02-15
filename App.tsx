@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { 
-  Calculator, Calendar, CreditCard, GraduationCap, Percent, CircleDollarSign, 
+  Calculator, Calendar, GraduationCap, Percent, CircleDollarSign, 
   Type, Lock, QrCode, Dices, 
   Sparkles, BookOpen, PenTool,
-  Moon, Sun, Menu
+  Moon, Sun
 } from 'lucide-react';
 import { ToolCategory, ToolDef, ToolType } from './types';
 import { ToolsGrid } from './components/ToolsGrid';

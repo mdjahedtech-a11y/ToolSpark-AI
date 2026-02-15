@@ -9,6 +9,13 @@ interface ToolViewProps {
   type: ToolType;
 }
 
+interface FontDef {
+    name: string;
+    fn?: (c: string) => string;
+    map?: Record<string, string>;
+    reverse?: boolean;
+}
+
 export const DailyToolView: React.FC<ToolViewProps> = ({ type }) => {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<string>('');
@@ -54,18 +61,8 @@ export const DailyToolView: React.FC<ToolViewProps> = ({ type }) => {
         }).join('');
     };
 
-    // 1. Bubbles
-    const bubbleMap: Record<string, string> = {};
-    "abcdefghijklmnopqrstuvwxyz".split('').forEach((c, i) => bubbleMap[c] = String.fromCodePoint(0x24D0 + i));
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split('').forEach((c, i) => bubbleMap[c] = String.fromCodePoint(0x24B6 + i));
-    "0123456789".split('').forEach((c, i) => bubbleMap[c] = String.fromCodePoint(0x2460 + i));
-
-    // 2. Square
-    const squareMap: Record<string, string> = {};
-    "abcdefghijklmnopqrstuvwxyz".split('').forEach((c, i) => squareMap[c] = String.fromCodePoint(0x1F130 + i)); // Bold Script actually, let's use fixed squares
-    
     // Let's use specific maps for best compatibility
-    const fonts = [
+    const fonts: FontDef[] = [
         {
             name: "Bubbles",
             fn: (c: string) => {
@@ -160,13 +157,13 @@ export const DailyToolView: React.FC<ToolViewProps> = ({ type }) => {
 
     const results = fonts.map(style => {
         let content = "";
-        if (style.reverse) {
+        if (style.reverse && style.map) {
+             const m = style.map; // Assign to variable for TS strict checking in closure
              content = textInput.split('').reverse().map(c => {
-                if (style.map) return style.map[c] || style.map[c.toLowerCase()] || c;
-                return c;
+                return m[c] || m[c.toLowerCase()] || c;
              }).join('');
         } else if (style.map) {
-             content = transform(textInput, style.map as any);
+             content = transform(textInput, style.map);
         } else if (style.fn) {
              content = transform(textInput, style.fn);
         }
